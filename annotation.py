@@ -1,6 +1,18 @@
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from PIL import Image
 import sys
+import signal
 import os
 import re
+import tempfile
+import numpy as np
+import multiprocessing
+
+import librosa
+import librosa.display
+import tqdm
 
 js = '''
 <script type="text/javascript">
@@ -21,7 +33,16 @@ function playNext() {
         for (let node of nodes) {
             node.classList.remove('playing');
         }
-        nodes[next].classList.add('playing');
+        let node = nodes[next];
+
+        Element.prototype.documentOffsetTop = function () {
+            return this.offsetTop + ( this.offsetParent ? this.offsetParent.documentOffsetTop() : 0 );
+        };
+        var top = node.documentOffsetTop() - ( window.innerHeight / 2 );
+        window.scrollTo(0, top);
+
+
+        node.classList.add('playing');
         videoPlayer.src = items[next];
         videoPlayer.playbackRate = speed;
         videoPlayer.play();
@@ -93,9 +114,9 @@ function init() {
         const keyName = event.key;
         if (keyName === 'e') {
             toggle();
-        } else if (keyName === '+') {
+        } else if (keyName === '>') {
             speedUp();
-        } else if (keyName === '-') {
+        } else if (keyName === '<') {
             speedDown();
         } else if (keyName === 'ArrowLeft') {
             next = Math.max(0, next - 2);
@@ -126,10 +147,10 @@ def sort(names):
     names.sort(key=f)
     return names
 
-def make(names):
+def make(names, paths):
     content = ''
-    for name in names:
-        content += '<div class="item">{}</div>'.format(name)
+    for name, path in zip(names, paths):
+        content += '<div class="item", style="background-position: center right; background-repeat: no-repeat; background-image: url(\'{}\');"><p>{}</p></div>'.format(path, name)
         content += '\n'
 
     html = '''
@@ -138,14 +159,17 @@ def make(names):
 <meta charset="utf-8"/>
 <style type="text/css">
 #copy-button {font-size: 32px;}
-.playing {background-color:blue;}
+.playing {
+    border-color: lime;
+    border-width: 5px;
+}
 .music {
-    color: red;
+    background-color: red;
+    font-weight: bold;
 }
 .item {
-    margin: 5 5;
-    padding: 5px;
-    border: medium solid black;
+    border-style: solid;
+    margin: 3px 3px
     }
 </style>
 </head>
@@ -155,8 +179,8 @@ def make(names):
 <li>e: アノテーション切り替え</li>
 <li>→: 次</li>
 <li>←: 前</li>
-<li>+: 速く</li>
-<li>-: 遅く</li>
+<li>&gt;: 速く</li>
+<li>&lt;: 遅く</li>
 </ul>
 <div id="playlist">''' + content + '''
 </div>
@@ -168,6 +192,19 @@ def make(names):
 </html>
     '''
     return html
+
+def process(args):
+    name, path = args
+    arr = librosa.feature.melspectrogram(*librosa.load(name), n_mels=80, fmax=8000)
+    arr = arr ** 1.2
+    #im = Image.fromarray(arr)
+    #im.save(path[1])
+    plt.figure(figsize=(10, 1))
+    librosa.display.specshow(librosa.power_to_db(arr, ref=np.max), fmax=8000)
+    #plt.colorbar()
+    plt.tight_layout()
+    plt.savefig(path)
+
 
 def main():
     import argparse
@@ -185,11 +222,29 @@ def main():
                 names.append(os.path.join(a, p))
     names = sort(names)
     print(names, file=sys.stderr)
-    html = make(names)
+
+    dpath = tempfile.mkdtemp(dir='.')
+    def mk_path(p):
+        p = tempfile.mkstemp(dir=dpath, suffix='.png')[1]
+        basepath = os.path.dirname(__file__)
+        prefix = os.path.commonprefix([basepath, p])
+        return os.path.relpath(p, prefix)
+    paths = list(map(mk_path, names))
+    html = make(names, paths)
 
     with open('index.html', 'w') as f:
         print(html, file=f)
     print('Written to index.html', file=sys.stderr)
+
+    original_sigint = signal.getsignal(signal.SIGINT)
+    def exit_gracefully(signum, frame):
+        # restore the original signal handler as otherwise evil things will happen
+        # in raw_input when CTRL+C is pressed, and our signal handler is not re-entrant
+        signal.signal(signal.SIGINT, original_sigint)
+        for path in paths:
+            os.remove(path)
+        os.rmdir(dpath)
+    signal.signal(signal.SIGINT, exit_gracefully)
 
     import http.server
     import socketserver
@@ -197,8 +252,13 @@ def main():
     Handler = http.server.SimpleHTTPRequestHandler
     print('Starting server...', file=sys.stderr)
     with socketserver.TCPServer(("", PORT), Handler) as httpd:
+        print('Rendering images...', file=sys.stderr)
+        pool = multiprocessing.Pool()
+        list(tqdm.tqdm(pool.imap(process, zip(names, paths)), total=len(paths)))
+
         print("serving at port", PORT)
         httpd.serve_forever()
+
 
 
 if __name__ == '__main__':
