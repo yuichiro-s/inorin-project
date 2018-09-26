@@ -83,6 +83,12 @@ function init() {
         playNext();
     }
 
+    document.getElementById("copy-button").addEventListener('click', (e) => {
+        let result = document.getElementById('result');
+        result.select();
+        document.execCommand('copy');
+    });
+
     document.addEventListener('keydown', (event) => {
         const keyName = event.key;
         if (keyName === 'e') {
@@ -131,6 +137,7 @@ def make(names):
 <head>
 <meta charset="utf-8"/>
 <style type="text/css">
+#copy-button {font-size: 32px;}
 .playing {background-color:blue;}
 .music {
     color: red;
@@ -153,6 +160,7 @@ def make(names):
 </ul>
 <div id="playlist">''' + content + '''
 </div>
+<button id="copy-button">Copy to clipboard</button>
 <form><textarea id="result" style="width: 500px; height: 500px;"></textarea></form>
 <audio id="videoPlayer" src="" autobuffer controls></audio>
 '''  + js + '''
