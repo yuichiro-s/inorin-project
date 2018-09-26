@@ -251,11 +251,11 @@ def main():
     PORT = args.port
     Handler = http.server.SimpleHTTPRequestHandler
     print('Starting server...', file=sys.stderr)
-    with socketserver.TCPServer(("", PORT), Handler) as httpd:
-        print('Rendering images...', file=sys.stderr)
-        pool = multiprocessing.Pool()
-        list(tqdm.tqdm(pool.imap(process, zip(names, paths)), total=len(paths)))
+    print('Rendering images...', file=sys.stderr)
+    pool = multiprocessing.Pool()
+    list(tqdm.tqdm(pool.imap(process, zip(names, paths)), total=len(paths)))
 
+    with socketserver.TCPServer(("", PORT), Handler) as httpd:
         print("serving at port", PORT)
         httpd.serve_forever()
 
