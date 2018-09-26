@@ -1,4 +1,6 @@
 import sys
+import os
+import re
 
 js = '''
 <script type="text/javascript">
@@ -83,7 +85,7 @@ function init() {
 
     document.addEventListener('keydown', (event) => {
         const keyName = event.key;
-        if (keyName === 'z') {
+        if (keyName === 'e') {
             toggle();
         } else if (keyName === '+') {
             speedUp();
@@ -105,6 +107,17 @@ setTimeout(init, 100);
 '''
 
 def sort(names):
+    def f(name):
+        items = list(re.split('[-_\./]', name))
+        new_items = []
+        for item in items:
+            try:
+                item = int(item)
+            except Exception as ex:
+                pass
+            new_items.append(item)
+        return new_items
+    names.sort(key=f)
     return names
 
 def make(names):
@@ -114,8 +127,9 @@ def make(names):
         content += '\n'
 
     html = '''
-<html>
+<html lang="en">
 <head>
+<meta charset="utf-8"/>
 <style type="text/css">
 .playing {background-color:blue;}
 .music {
@@ -131,7 +145,7 @@ def make(names):
 <body>
 <ul>
 <li>クリック: 再生する.wavを切り替え</li>
-<li>z: アノテーション切り替え</li>
+<li>e: アノテーション切り替え</li>
 <li>→: 次</li>
 <li>←: 前</li>
 <li>+: 速く</li>
@@ -145,12 +159,38 @@ def make(names):
 </body>
 </html>
     '''
-    print(html)
+    return html
 
 def main():
-    names = sys.argv[1:]
+    import argparse
+
+    parser = argparse.ArgumentParser(description='')
+    parser.add_argument('wav_dir')
+    parser.add_argument('--port', type=int, default=8080)
+
+    args = parser.parse_args()
+
+    names = []
+    for a, _, c in os.walk(args.wav_dir):
+        for p in c:
+            if p.endswith('.wav'):
+                names.append(os.path.join(a, p))
     names = sort(names)
-    make(names)
+    print(names, file=sys.stderr)
+    html = make(names)
+
+    with open('index.html', 'w') as f:
+        print(html, file=f)
+    print('Written to index.html', file=sys.stderr)
+
+    import http.server
+    import socketserver
+    PORT = args.port
+    Handler = http.server.SimpleHTTPRequestHandler
+    print('Starting server...', file=sys.stderr)
+    with socketserver.TCPServer(("", PORT), Handler) as httpd:
+        print("serving at port", PORT)
+        httpd.serve_forever()
 
 
 if __name__ == '__main__':
