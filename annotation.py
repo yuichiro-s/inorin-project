@@ -114,9 +114,9 @@ function init() {
         const keyName = event.key;
         if (keyName === 'e') {
             toggle();
-        } else if (keyName === '>') {
+        } else if (keyName === '+') {
             speedUp();
-        } else if (keyName === '<') {
+        } else if (keyName === '-') {
             speedDown();
         } else if (keyName === 'ArrowLeft') {
             next = Math.max(0, next - 2);
@@ -179,8 +179,8 @@ def make(names, paths):
 <li>e: アノテーション切り替え</li>
 <li>→: 次</li>
 <li>←: 前</li>
-<li>&gt;: 速く</li>
-<li>&lt;: 遅く</li>
+<li>+: 速く</li>
+<li>-: 遅く</li>
 </ul>
 <div id="playlist">''' + content + '''
 </div>
