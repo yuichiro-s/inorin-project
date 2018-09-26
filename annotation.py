@@ -32,8 +32,8 @@ function playNext() {
 }
 
 function toggle() {
-    if (playing) {
-        let cur = next - 1;
+    let cur = next - 1;
+    if (0 <= cur && cur < items.length) {
         if (set.has(cur)) {
             set.delete(cur);
         } else {
@@ -154,7 +154,7 @@ def make(names):
 <div id="playlist">''' + content + '''
 </div>
 <form><textarea id="result" style="width: 500px; height: 500px;"></textarea></form>
-<audio id="videoPlayer" src="" autobuffer controls>
+<audio id="videoPlayer" src="" autobuffer controls></audio>
 '''  + js + '''
 </body>
 </html>
