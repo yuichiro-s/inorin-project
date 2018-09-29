@@ -85,6 +85,12 @@ function speedDown() {
     videoPlayer.playbackRate = speed;
 }
 
+function speedReset() {
+    let videoPlayer = document.getElementById('videoPlayer');
+    videoPlayer.playbackRate = 1.0;
+}
+
+
 function init() {
     for (var i = 0; i < children.length; i++) {
         let child = children[i];
@@ -118,6 +124,8 @@ function init() {
             speedUp();
         } else if (keyName === '-') {
             speedDown();
+        } else if (keyName === '0') {
+            speedReset();
         } else if (keyName === 'ArrowLeft') {
             next = Math.max(0, next - 2);
             playNext();
@@ -181,6 +189,7 @@ def make(names, paths):
 <li>←: 前</li>
 <li>+: 速く</li>
 <li>-: 遅く</li>
+<li>0: 速度リセット</li>
 </ul>
 <div id="playlist">''' + content + '''
 </div>
