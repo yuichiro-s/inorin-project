@@ -209,7 +209,8 @@ def process(args):
     arr = arr ** 1.2
     #im = Image.fromarray(arr)
     #im.save(path[1])
-    plt.figure(figsize=(10, 1))
+    width = arr.shape[1] // 20
+    plt.figure(figsize=(width, 1))
     librosa.display.specshow(librosa.power_to_db(arr, ref=np.max), fmax=8000)
     #plt.colorbar()
     plt.tight_layout()
