@@ -87,7 +87,8 @@ function speedDown() {
 
 function speedReset() {
     let videoPlayer = document.getElementById('videoPlayer');
-    videoPlayer.playbackRate = 1.0;
+    speed = 1.0;
+    videoPlayer.playbackRate = speed;
 }
 
 
