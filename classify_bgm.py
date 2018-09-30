@@ -15,8 +15,6 @@ def main(args):
             y, sr = librosa.load(path)
             prob = classify(model, y)
             label = int(prob > args.threshold)
-
-            # not BGM
             print('{}\t{:.3f}\t{}'.format(label, float(prob), path))
 
 
