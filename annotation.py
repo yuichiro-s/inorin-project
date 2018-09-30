@@ -1,7 +1,7 @@
 import matplotlib
+
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-from PIL import Image
 import sys
 import signal
 import os
@@ -142,6 +142,7 @@ setTimeout(init, 100);
 </script>
 '''
 
+
 def sort(names):
     def f(name):
         items = list(re.split('[-_\./]', name))
@@ -153,13 +154,16 @@ def sort(names):
                 pass
             new_items.append(item)
         return new_items
+
     names.sort(key=f)
     return names
+
 
 def make(names, paths):
     content = ''
     for name, path in zip(names, paths):
-        content += '<div class="item", style="background-position: center right; background-repeat: no-repeat; background-image: url(\'{}\');"><p>{}</p></div>'.format(path, name)
+        content += '<div class="item", style="background-position: center right; background-repeat: no-repeat; background-image: url(\'{}\');"><p>{}</p></div>'.format(
+            path, name)
         content += '\n'
 
     html = '''
@@ -197,22 +201,20 @@ def make(names, paths):
 <button id="copy-button">Copy to clipboard</button>
 <form><textarea id="result" style="width: 500px; height: 500px;"></textarea></form>
 <audio id="videoPlayer" src="" autobuffer controls></audio>
-'''  + js + '''
+''' + js + '''
 </body>
 </html>
     '''
     return html
 
+
 def process(args):
     name, path = args
     arr = librosa.feature.melspectrogram(*librosa.load(name), n_mels=80, fmax=8000)
     arr = arr ** 1.2
-    #im = Image.fromarray(arr)
-    #im.save(path[1])
     width = arr.shape[1] // 20
     plt.figure(figsize=(width, 1))
     librosa.display.specshow(librosa.power_to_db(arr, ref=np.max), fmax=8000)
-    #plt.colorbar()
     plt.tight_layout()
     plt.savefig(path)
 
@@ -235,11 +237,13 @@ def main():
     print(names, file=sys.stderr)
 
     dpath = tempfile.mkdtemp(dir='.')
+
     def mk_path(p):
         p = tempfile.mkstemp(dir=dpath, suffix='.png')[1]
         basepath = os.path.dirname(__file__)
         prefix = os.path.commonprefix([basepath, p])
         return os.path.relpath(p, prefix)
+
     paths = list(map(mk_path, names))
     html = make(names, paths)
 
@@ -248,6 +252,7 @@ def main():
     print('Written to index.html', file=sys.stderr)
 
     original_sigint = signal.getsignal(signal.SIGINT)
+
     def exit_gracefully(signum, frame):
         # restore the original signal handler as otherwise evil things will happen
         # in raw_input when CTRL+C is pressed, and our signal handler is not re-entrant
@@ -255,6 +260,7 @@ def main():
         for path in paths:
             os.remove(path)
         os.rmdir(dpath)
+
     signal.signal(signal.SIGINT, exit_gracefully)
 
     import http.server
@@ -271,7 +277,5 @@ def main():
         httpd.serve_forever()
 
 
-
 if __name__ == '__main__':
     main()
-
