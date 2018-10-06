@@ -10,7 +10,7 @@ from util import extract_features
 
 
 def load(path):
-    wav, sr = librosa.load(path)
+    wav, _ = librosa.load(path)
     x = extract_features(wav)
     return x
 
@@ -34,7 +34,6 @@ def main(args):
         current_paths = []
         for x, path in tqdm.tqdm(zip(pool.imap(load, paths), paths), total=len(paths)):
             current_xs.append(x)
-
             current_paths.append(path)
             if len(current_xs) >= args.batch:
                 process(current_xs, model, args.threshold, current_paths)
