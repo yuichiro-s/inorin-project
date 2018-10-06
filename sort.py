@@ -6,7 +6,7 @@ def main():
     for line in sys.stdin:
         line = line.strip()
         es = []
-        for e in re.split('[-_\./]', line):
+        for e in re.split('[-_\./|]', line):
             try:
                 e = int(e)
             except:
